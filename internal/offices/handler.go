@@ -8,7 +8,7 @@ import (
 )
 
 type OfficeHandler struct {
-	RegisterRepository *OfficeRepository
+	OfficeRepository *OfficeRepository
 }
 
 type OfficeHandlerDeps struct {
@@ -18,7 +18,7 @@ type OfficeHandlerDeps struct {
 
 func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 	handler := &OfficeHandler{
-		RegisterRepository: deps.RegisterRepository,
+		OfficeRepository: deps.RegisterRepository,
 	}
 	router.HandleFunc("POST /register", handler.CreateOffice())
 }
@@ -30,7 +30,7 @@ func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
 			return
 		}
 		registers := NewOffice(body.Name, body.Address, body.WorkingHours)
-		createRegister, err := handler.RegisterRepository.CreateOffice(registers)
+		createRegister, err := handler.OfficeRepository.CreateOffice(registers)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
