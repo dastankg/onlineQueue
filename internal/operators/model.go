@@ -14,5 +14,5 @@ type Operator struct {
 	IsAdmin     bool `gorm:"default:false"`
 	TableNumber int
 	RegisterID  *uint
-	Register    offices.Offices `gorm:"foreignKey:RegisterID"`
+	Register    offices.Office `gorm:"foreignKey:RegisterID"`
 }

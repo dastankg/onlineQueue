@@ -12,7 +12,7 @@ func NewOfficeRepository(db *db.DB) *OfficeRepository {
 	}
 }
 
-func (repo *OfficeRepository) CreateOffice(register *Offices) (*Offices, error) {
+func (repo *OfficeRepository) CreateOffice(register *Office) (*Office, error) {
 	result := repo.Database.DB.Create(register)
 	if result.Error != nil {
 		return nil, result.Error
