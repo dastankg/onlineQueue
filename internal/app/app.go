@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"onlineQueue/configs"
 	"onlineQueue/internal/auth"
+	"onlineQueue/internal/offices"
 	"onlineQueue/internal/operators"
 	db2 "onlineQueue/pkg/db"
 	"onlineQueue/pkg/middleware"
@@ -20,12 +21,17 @@ func App() http.Handler {
 	}
 	router := http.NewServeMux()
 
-	operatorsRepositoru := operators.NewOperatorRepository(db)
-	authService := auth.NewAuthService(operatorsRepositoru)
+	operatorsRepository := operators.NewOperatorRepository(db)
+	registersRepository := offices.NewOfficeRepository(db)
+	authService := auth.NewAuthService(operatorsRepository)
 
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
 		conf,
 		authService,
+	})
+	offices.NewOfficeHandler(router, offices.OfficeHandlerDeps{
+		registersRepository,
+		conf,
 	})
 	stack := middleware.Chain(middleware.CORS, middleware.Logging)
 	return stack(router)

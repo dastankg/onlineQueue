@@ -41,3 +41,15 @@ func (service *AuthService) Register(name, login, password string, isAdmin bool,
 	}
 	return operator.Login, nil
 }
+
+func (service *AuthService) Login(login, password string) (string, error) {
+	existedOperator, err := service.OperatorRepository.FindByLogin(login)
+	if err != nil {
+		return "", err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(existedOperator.Password), []byte(password))
+	if err != nil {
+		return "", err
+	}
+	return existedOperator.Login, nil
+}

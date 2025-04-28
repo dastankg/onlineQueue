@@ -2,7 +2,7 @@ package operators
 
 import (
 	"gorm.io/gorm"
-	"onlineQueue/internal/registers"
+	"onlineQueue/internal/offices"
 )
 
 type Operator struct {
@@ -13,5 +13,5 @@ type Operator struct {
 	IsActive   bool `gorm:"default:true"`
 	IsAdmin    bool `gorm:"default:false"`
 	RegisterID *uint
-	Register   registers.Register `gorm:"foreignKey:RegisterID"`
+	Register   offices.Offices `gorm:"foreignKey:RegisterID"`
 }

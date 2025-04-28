@@ -24,7 +24,7 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 		Config:      deps.Config,
 		AuthService: deps.AuthService,
 	}
-	//router.HandleFunc("POST /auth/login", handler.Login())
+	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
 }
 
@@ -34,13 +34,8 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 		if err != nil {
 			return
 		}
-		var registerID *uint
-		if body.RegisterID != nil {
-			registerID = body.RegisterID
-		} else {
-			registerID = nil
-		}
-		login, err := handler.AuthService.Register(body.Name, body.Login, body.Password, false, registerID)
+
+		login, err := handler.AuthService.Register(body.Name, body.Login, body.Password, false, body.RegisterID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -65,6 +60,39 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 			RefreshToken: tokens.RefreshToken,
 		}
 		res.Json(w, data, 201)
+	}
+}
 
+func (handler *AuthHandler) Login() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := req.HandleBody[LoginRequest](&w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		login, err := handler.AuthService.Login(body.Login, body.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		jwtService := jwt.NewJWT(
+			handler.Config.Auth.AccessSecret,
+			handler.Config.Auth.RefreshSecret,
+		)
+		tokens, err := jwtService.CreateTokenPair(
+			login,
+			15*time.Minute, // access token на 15 минут
+			24*7*time.Hour, // refresh token на 7 дней
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data := LoginResponse{
+			Login:        login,
+			AccessToken:  tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+		}
+		res.Json(w, data, 201)
 	}
 }
