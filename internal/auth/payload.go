@@ -4,7 +4,7 @@ type RegisterRequest struct {
 	Name       string `json:"name"`
 	Login      string `json:"login"`
 	Password   string `json:"password"`
-	RegisterID *uint  `json:"register_id,omitempty"`
+	RegisterID *uint  `json:"office_id,omitempty"`
 }
 
 type RegisterResponse struct {

@@ -1,8 +1,6 @@
 package operators
 
 import (
-	"errors"
-	"gorm.io/gorm"
 	"onlineQueue/pkg/db"
 )
 
@@ -25,9 +23,7 @@ func (repo *OperatorRepository) CreateOperator(operator *Operator) (*Operator, e
 func (repo *OperatorRepository) FindByLogin(login string) (*Operator, error) {
 	var operator Operator
 	result := repo.database.DB.Where("login = ?", login).First(&operator)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
+
 	if result.Error != nil {
 		return nil, result.Error
 	}

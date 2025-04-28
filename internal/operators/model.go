@@ -13,6 +13,6 @@ type Operator struct {
 	IsActive    bool `gorm:"default:true"`
 	IsAdmin     bool `gorm:"default:false"`
 	TableNumber int
-	RegisterID  *uint
-	Register    offices.Office `gorm:"foreignKey:RegisterID"`
+	OfficeID    *uint
+	Office      offices.Office `gorm:"foreignKey:OfficeID;references:ID"` // связь
 }

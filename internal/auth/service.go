@@ -18,9 +18,7 @@ func NewAuthService(operatorRepository *operators.OperatorRepository) *AuthServi
 
 func (service *AuthService) Register(name, login, password string, isAdmin bool, registerID *uint) (string, error) {
 	existedOperator, err := service.OperatorRepository.FindByLogin(login)
-	if err != nil {
-		return "", err
-	}
+
 	if existedOperator != nil {
 		return "", errors.New(ErrUserExists)
 	}
@@ -29,11 +27,11 @@ func (service *AuthService) Register(name, login, password string, isAdmin bool,
 		return "", err
 	}
 	operator := &operators.Operator{
-		Name:       name,
-		Login:      login,
-		Password:   string(hashedPassword),
-		IsAdmin:    isAdmin,
-		RegisterID: registerID,
+		Name:     name,
+		Login:    login,
+		Password: string(hashedPassword),
+		IsAdmin:  isAdmin,
+		OfficeID: registerID,
 	}
 	_, err = service.OperatorRepository.CreateOperator(operator)
 	if err != nil {

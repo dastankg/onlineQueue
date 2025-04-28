@@ -54,7 +54,7 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 	log.Println("Successfully connected to database")
-	err = db.AutoMigrate(&operators.Operator{}, &offices.Offices{})
+	err = db.AutoMigrate(&operators.Operator{}, &offices.Office{})
 	if err != nil {
 		log.Fatal("Database migration failed:", err)
 	}
