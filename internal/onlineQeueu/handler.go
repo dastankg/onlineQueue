@@ -1,6 +1,9 @@
 package onlineQeueu
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"onlineQueue/pkg/req"
 	"onlineQueue/pkg/res"
@@ -24,9 +27,21 @@ func NewQueueHandler(router *http.ServeMux, deps QueueHandlerDeps) {
 	router.HandleFunc("POST /queue/cancel", handler.CancelQueue())
 	router.HandleFunc("POST /queue/take", handler.TakeClient())
 	router.HandleFunc("POST /queue/finish", handler.FinishService())
-	router.HandleFunc("GET /queue/current", handler.CurrentClient())
+	router.HandleFunc("GET /queue/position", handler.GetClientPosition())
 }
 
+// JoinQueue добавляет клиента в очередь по заданному офису.
+//
+// @Summary      Присоединиться к очереди
+// @Description  Добавляет клиента с указанным номером в очередь определенного офиса
+// @Tags         Очередь
+// @Accept       json
+// @Produce      json
+// @Param        request  body      JoinQueueRequest  true  "Данные клиента и офиса"
+// @Success      201      {object}  map[string]string  "Клиент добавлен"
+// @Failure      400      {string}  string             "Неверный формат запроса"
+// @Failure      500      {string}  string             "Ошибка сервера или бизнес-логики"
+// @Router       /queue/join [post]
 func (h *QueueHandler) JoinQueue() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[JoinQueueRequest](&w, r)
@@ -99,30 +114,63 @@ func (h *QueueHandler) FinishService() http.HandlerFunc {
 	}
 }
 
-func (h *QueueHandler) CurrentClient() http.HandlerFunc {
+// GetClientPosition возвращает позицию клиента в очереди.
+//
+// @Summary      Узнать место клиента в очереди
+// @Tags         Очередь
+// @Accept       json
+// @Produce      json
+// @Param        office_id    query     int    true  "ID офиса"
+// @Param        phone        query     string true  "Номер телефона клиента"
+// @Success      200 {object} GetQueueResponse "Информация о позиции клиента"
+// @Failure      400 {string} string "Некорректные параметры запроса"
+// @Router       /queue/position [get]
+func (h *QueueHandler) GetClientPosition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Получаем параметры из URL
 		officeIDStr := r.URL.Query().Get("office_id")
-		operatorIDStr := r.URL.Query().Get("operator_id")
+		phoneNumber := r.URL.Query().Get("phone")
+
+		if officeIDStr == "" || phoneNumber == "" {
+			http.Error(w, "Missing office_id or phone", http.StatusBadRequest)
+			return
+		}
 
 		officeID, err := strconv.Atoi(officeIDStr)
 		if err != nil {
-			http.Error(w, "Invalid office_id", http.StatusBadRequest)
-			return
-		}
-		operatorID, err := strconv.Atoi(operatorIDStr)
-		if err != nil {
-			http.Error(w, "Invalid operator_id", http.StatusBadRequest)
+			http.Error(w, "Invalid office_id format", http.StatusBadRequest)
 			return
 		}
 
-		clientNumber, err := h.QueueService.GetClientInService(uint(officeID), uint(operatorID))
+		keyQueue := fmt.Sprintf("queue:%d", officeID)
+		queue, err := h.QueueService.RedisClient.LRange(context.Background(), keyQueue, 0, -1).Result()
 		if err != nil {
-			http.Error(w, "No client in service", http.StatusNotFound)
+			http.Error(w, "Failed to get queue", http.StatusInternalServerError)
 			return
 		}
 
-		res.Json(w, map[string]interface{}{
-			"client_number": clientNumber,
-		}, http.StatusOK)
+		clientsBefore := -1
+		for index, number := range queue {
+			if number == phoneNumber {
+				clientsBefore = index + 1
+				break
+			}
+		}
+
+		response := map[string]interface{}{
+			"общее колво": len(queue),
+		}
+
+		if clientsBefore == -1 {
+			response["сообщение"] = "Вас нет в очереди"
+		} else {
+			response["лично ваша очередь"] = clientsBefore
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			return
+		}
 	}
 }

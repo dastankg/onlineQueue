@@ -5,3 +5,7 @@ type OfficeCreateRequest struct {
 	Address      string `json:"address"`
 	WorkingHours string `json:"working_hours"`
 }
+
+type OfficesGetResponse struct {
+	Offices []Office `json:"offices"`
+}

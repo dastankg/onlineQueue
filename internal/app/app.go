@@ -1,8 +1,10 @@
 package app
 
 import (
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 	"onlineQueue/configs"
+	_ "onlineQueue/docs"
 	"onlineQueue/internal/auth"
 	"onlineQueue/internal/offices"
 	"onlineQueue/internal/onlineQeueu"
@@ -40,6 +42,7 @@ func App() http.Handler {
 	onlineQeueu.NewQueueHandler(router, onlineQeueu.QueueHandlerDeps{
 		queueService,
 	})
+	router.Handle("/docs/", httpSwagger.WrapHandler)
 
 	stack := middleware.Chain(middleware.CORS, middleware.Logging)
 	return stack(router)

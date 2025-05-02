@@ -5,6 +5,10 @@ import (
 	"onlineQueue/internal/app"
 )
 
+// @title API documentation
+// @version 1.0.1
+// @host 127.0.0.1:8080
+// @BasePath
 func main() {
 	app := app.App()
 	server := &http.Server{

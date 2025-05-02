@@ -34,12 +34,12 @@ func (qs *QueueService) CreateOfficeQueue(officeID uint) error {
 	return nil
 }
 
-func (qs *QueueService) AddClientToQueue(officeID uint, clientNumber int) error {
+func (qs *QueueService) AddClientToQueue(officeID uint, clientNumber string) error {
 	keyQueue := fmt.Sprintf("queue:%d", officeID)
 	return qs.RedisClient.RPush(ctx, keyQueue, clientNumber).Err()
 }
 
-func (qs *QueueService) RemoveClientFromQueue(officeID uint, clientNumber int) error {
+func (qs *QueueService) RemoveClientFromQueue(officeID uint, clientNumber string) error {
 	keyQueue := fmt.Sprintf("queue:%d", officeID)
 	return qs.RedisClient.LRem(ctx, keyQueue, 0, clientNumber).Err()
 }
@@ -75,4 +75,21 @@ func (qs *QueueService) GetClientInService(officeID uint, operatorID uint) (int,
 func (qs *QueueService) FinishService(officeID uint, operatorID uint) error {
 	keyInService := fmt.Sprintf("in_service:%d", officeID)
 	return qs.RedisClient.HDel(ctx, keyInService, fmt.Sprintf("%d", operatorID)).Err()
+}
+
+func (qs *QueueService) GetClientPosition(officeID uint, clientNumber string) (int, error) {
+	keyQueue := fmt.Sprintf("queue:%d", officeID)
+
+	queue, err := qs.RedisClient.LRange(ctx, keyQueue, 0, -1).Result()
+	if err != nil {
+		return 0, err
+	}
+	clientStr := clientNumber
+
+	for index, item := range queue {
+		if item == clientStr {
+			return index, nil
+		}
+	}
+	return 0, fmt.Errorf("client not found in queue")
 }

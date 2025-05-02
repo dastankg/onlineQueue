@@ -24,7 +24,8 @@ func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 		OfficeRepository: deps.OfficeRepository,
 		QueueService:     deps.QueueService,
 	}
-	router.HandleFunc("POST /register", handler.CreateOffice())
+	router.HandleFunc("POST /office", handler.CreateOffice())
+	router.HandleFunc("GET /offices", handler.GetOffices())
 }
 
 func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
@@ -48,5 +49,24 @@ func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
 		}
 		res.Json(w, createdOffice, http.StatusCreated)
 
+	}
+}
+
+// GetOffices возвращает список всех офисов.
+//
+// @Summary      Получить список офисов
+// @Description  Возвращает массив офисов, доступных для записи в очередь
+// @Tags         Офисы
+// @Produce      json
+// @Success      200  {object}  OfficesGetResponse  "Список офисов"
+// @Router       /offices [get]
+func (handler *OfficeHandler) GetOffices() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		offices := handler.OfficeRepository.GetOffices()
+
+		data := OfficesGetResponse{
+			Offices: offices,
+		}
+		res.Json(w, data, http.StatusOK)
 	}
 }

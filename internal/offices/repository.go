@@ -19,3 +19,9 @@ func (repo *OfficeRepository) CreateOffice(register *Office) (*Office, error) {
 	}
 	return register, nil
 }
+
+func (repo *OfficeRepository) GetOffices() []Office {
+	var offices []Office
+	repo.Database.Table("offices").Find(&offices)
+	return offices
+}

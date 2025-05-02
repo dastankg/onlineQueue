@@ -158,3 +158,6 @@ fabric.properties
 
 .env
 .idea
+docs.go
+swagger.json
+swagger.yaml
