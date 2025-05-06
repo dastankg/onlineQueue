@@ -3,7 +3,8 @@ package auth
 type RegisterRequest struct {
 	Name       string `json:"name"`
 	Login      string `json:"login"`
-	Password   string `json:"password"`
+	Password1  string `json:"password1"`
+	Password2  string `json:"password2"`
 	RegisterID *uint  `json:"office_id,omitempty"`
 }
 

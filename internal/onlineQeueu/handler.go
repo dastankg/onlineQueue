@@ -34,7 +34,7 @@ func NewQueueHandler(router *http.ServeMux, deps QueueHandlerDeps) {
 //
 // @Summary      Присоединиться к очереди
 // @Description  Добавляет клиента с указанным номером в очередь определенного офиса
-// @Tags         Очередь
+// @Tags         Queue
 // @Accept       json
 // @Produce      json
 // @Param        request  body      JoinQueueRequest  true  "Данные клиента и офиса"
@@ -59,6 +59,18 @@ func (h *QueueHandler) JoinQueue() http.HandlerFunc {
 	}
 }
 
+// CancelQueue удаляет клиента из очереди.
+//
+// @Summary      Отменить очередь клиента
+// @Description  Удаляет клиента с заданным номером из очереди в указанном офисе.
+// @Tags         Queue
+// @Accept       json
+// @Produce      json
+// @Param        body  body  CancelQueueRequest  true  "Данные для удаления клиента из очереди"
+// @Success      200   {object}  map[string]string  "Клиент удалён из очереди"
+// @Failure      400   {string}  string       "Неверный запрос"
+// @Failure      500   {string}  string       "Ошибка удаления клиента из очереди"
+// @Router       /queue/cancel [post]
 func (h *QueueHandler) CancelQueue() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[CancelQueueRequest](&w, r)
@@ -76,6 +88,17 @@ func (h *QueueHandler) CancelQueue() http.HandlerFunc {
 	}
 }
 
+// TakeClient переводит следующего клиента в статус "обслуживается".
+//
+// @Summary      Принять клиента
+// @Description  Переводит следующего клиента из очереди в статус "обслуживается" указанным оператором.
+// @Tags         Queue
+// @Accept       json
+// @Produce      json
+// @Param        body  body  TakeClientRequest  true  "Данные для принятия клиента"
+// @Success      200   {object}  map[string]interface{}  "Клиент принят на обслуживание"
+// @Failure      400   {string}  string  "Очередь пуста или ошибка обработки"
+// @Router       /queue/take [post]
 func (h *QueueHandler) TakeClient() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[TakeClientRequest](&w, r)
@@ -97,6 +120,18 @@ func (h *QueueHandler) TakeClient() http.HandlerFunc {
 	}
 }
 
+// FinishService завершает обслуживание клиента оператором.
+//
+// @Summary      Завершить обслуживание
+// @Description  Завершает обслуживание клиента в конкретном офисе выбранным оператором.
+// @Tags         Queue
+// @Accept       json
+// @Produce      json
+// @Param        body  body  FinishServiceRequest  true  "Данные для завершения обслуживания"
+// @Success      200   {object}  map[string]string  "Успешное завершение"
+// @Failure      400   {string}  string       "Неверный запрос"
+// @Failure      500   {string}  string       "Ошибка при завершении обслуживания"
+// @Router       /queue/finish [post]
 func (h *QueueHandler) FinishService() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[FinishServiceRequest](&w, r)
@@ -109,7 +144,6 @@ func (h *QueueHandler) FinishService() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		res.Json(w, map[string]string{"message": "Service finished"}, http.StatusOK)
 	}
 }
@@ -117,7 +151,7 @@ func (h *QueueHandler) FinishService() http.HandlerFunc {
 // GetClientPosition возвращает позицию клиента в очереди.
 //
 // @Summary      Узнать место клиента в очереди
-// @Tags         Очередь
+// @Tags         Queue
 // @Accept       json
 // @Produce      json
 // @Param        office_id    query     int    true  "ID офиса"
@@ -127,7 +161,6 @@ func (h *QueueHandler) FinishService() http.HandlerFunc {
 // @Router       /queue/position [get]
 func (h *QueueHandler) GetClientPosition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Получаем параметры из URL
 		officeIDStr := r.URL.Query().Get("office_id")
 		phoneNumber := r.URL.Query().Get("phone")
 

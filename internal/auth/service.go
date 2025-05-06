@@ -16,13 +16,16 @@ func NewAuthService(operatorRepository *operators.OperatorRepository) *AuthServi
 	}
 }
 
-func (service *AuthService) Register(name, login, password string, isAdmin bool, registerID *uint) (string, error) {
+func (service *AuthService) Register(name, login, password1, password2 string, isAdmin bool, registerID *uint) (string, error) {
 	existedOperator, err := service.OperatorRepository.FindByLogin(login)
 
 	if existedOperator != nil {
 		return "", errors.New(ErrUserExists)
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if password1 != password2 {
+		return "", errors.New(ErrWrongCredentials)
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password1), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}

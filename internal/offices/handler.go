@@ -28,6 +28,18 @@ func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 	router.HandleFunc("GET /offices", handler.GetOffices())
 }
 
+// CreateOffice создает новый офис
+//
+// @Summary 	Cоздать новый офис
+// @Description Создает офис с заданным названием, адресом и графиком работы. Также создается очередь для офиса.
+// @Tags 		Offices
+// @Accept      json
+// @Produce 	json
+// @Param		body body OfficeCreateRequest  true "Данные для создание"
+// @Success     201   {object}  Office                "Созданный офис"
+// @Failure     400   {string}  string        "Неверный запрос или ошибка валидации"
+// @Failure     500   {string}  string       "Ошибка при создании"
+// @Router      /office [post]
 func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[OfficeCreateRequest](&w, r)
@@ -56,7 +68,7 @@ func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
 //
 // @Summary      Получить список офисов
 // @Description  Возвращает массив офисов, доступных для записи в очередь
-// @Tags         Офисы
+// @Tags         Offices
 // @Produce      json
 // @Success      200  {object}  OfficesGetResponse  "Список офисов"
 // @Router       /offices [get]

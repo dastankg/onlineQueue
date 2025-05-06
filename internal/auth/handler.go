@@ -24,10 +24,22 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 		Config:      deps.Config,
 		AuthService: deps.AuthService,
 	}
-	router.HandleFunc("POST /auth/login", handler.Login())
-	router.HandleFunc("POST /auth/register", handler.Register())
+	router.HandleFunc("POST /login", handler.Login())
+	router.HandleFunc("POST /register", handler.Register())
 }
 
+// Register регистрация пользователя и возвращает пару токенов.
+//
+// @Summary 	Регистрация в систему
+// @Description Регистрация по логину и паролю, возвращает access и refresh токены
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param 		body body RegisterRequest true "Данные для регистрации"
+// @Success     201    {object}  RegisterResponse
+// @Failure     400    {string}  string  "Неверный логин или пароль"
+// @Failure     500    {string}  string  "Ошибка генерации токена"
+// @Router      /register [post]
 func (handler *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[RegisterRequest](&w, r)
@@ -35,7 +47,7 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		login, err := handler.AuthService.Register(body.Name, body.Login, body.Password, false, body.RegisterID)
+		login, err := handler.AuthService.Register(body.Name, body.Login, body.Password1, body.Password2, false, body.RegisterID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -63,6 +75,18 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 	}
 }
 
+// Login аутентифицирует пользователя и возвращает пару токенов.
+//
+// @Summary 	Вход в систему
+// @Description Авторизация пользователя по логину и паролю, возвращает access и refresh токены
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       body  body      LoginRequest  true  "Данные для входа"
+// @Success     201    {object}  LoginResponse
+// @Failure     400    {string}  string  "Неверный логин или пароль"
+// @Failure     500    {string}  string  "Ошибка генерации токена"
+// @Router      /login [post]
 func (handler *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[LoginRequest](&w, r)
