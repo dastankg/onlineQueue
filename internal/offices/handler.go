@@ -6,6 +6,7 @@ import (
 	"onlineQueue/internal/onlineQeueu"
 	"onlineQueue/pkg/req"
 	"onlineQueue/pkg/res"
+	"strconv"
 )
 
 type OfficeHandler struct {
@@ -26,6 +27,7 @@ func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 	}
 	router.HandleFunc("POST /office", handler.CreateOffice())
 	router.HandleFunc("GET /offices", handler.GetOffices())
+	router.HandleFunc("DELETE /office/{id}", handler.DeleteOffice())
 }
 
 // CreateOffice создает новый офис
@@ -80,5 +82,39 @@ func (handler *OfficeHandler) GetOffices() http.HandlerFunc {
 			Offices: offices,
 		}
 		res.Json(w, data, http.StatusOK)
+	}
+}
+
+// DeleteOffice удаляет офис по ID.
+//
+// @Summary      Удалить офис
+// @Description  Удаляет офис по заданному идентификатору
+// @Tags         Offices
+// @Param        id   path      int  true  "ID офиса"
+// @Produce      json
+// @Success      200  {object}  OfficeDeleteResponse  "Офис успешно удалён"
+// @Failure      400  {string}  string  "Некорректный ID офиса"
+// @Failure      404  {string}  string  "Офис не найден"
+// @Failure      500  {string}  string  "Внутренняя ошибка сервера"
+// @Router       /office/{id} [delete]
+func (handler *OfficeHandler) DeleteOffice() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idString := r.PathValue("id")
+		id, err := strconv.Atoi(idString)
+		if err != nil {
+			http.Error(w, "Invalid office id", http.StatusBadRequest)
+			return
+		}
+		_, err = handler.OfficeRepository.GetOfficeById(uint(id))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		err = handler.OfficeRepository.DeleteOffice(uint(id))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res.Json(w, map[string]string{"message": "Office deleted"}, http.StatusOK)
 	}
 }

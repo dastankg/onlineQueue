@@ -9,3 +9,7 @@ type OfficeCreateRequest struct {
 type OfficesGetResponse struct {
 	Offices []Office `json:"offices"`
 }
+
+type OfficeDeleteResponse struct {
+	Message string `json:"message"`
+}
