@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"onlineQueue/configs"
 	"onlineQueue/internal/onlineQeueu"
+	"onlineQueue/pkg/middleware"
 	"onlineQueue/pkg/req"
 	"onlineQueue/pkg/res"
 	"strconv"
@@ -25,9 +26,9 @@ func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 		OfficeRepository: deps.OfficeRepository,
 		QueueService:     deps.QueueService,
 	}
-	router.HandleFunc("POST /office", handler.CreateOffice())
-	router.HandleFunc("GET /offices", handler.GetOffices())
-	router.HandleFunc("DELETE /office/{id}", handler.DeleteOffice())
+	router.Handle("POST /office", middleware.IsAuthed(handler.CreateOffice(), deps.Config))
+	router.Handle("GET /offices", middleware.IsAuthed(handler.GetOffices(), deps.Config))
+	router.Handle("DELETE /office/{id}", middleware.IsAuthed(handler.DeleteOffice(), deps.Config))
 }
 
 // CreateOffice создает новый офис
@@ -37,6 +38,8 @@ func NewOfficeHandler(router *http.ServeMux, deps OfficeHandlerDeps) {
 // @Tags 		Offices
 // @Accept      json
 // @Produce 	json
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен авторизации" default(Bearer <token>)
 // @Param		body body OfficeCreateRequest  true "Данные для создание"
 // @Success     201   {object}  Office                "Созданный офис"
 // @Failure     400   {string}  string        "Неверный запрос или ошибка валидации"
@@ -72,6 +75,8 @@ func (handler *OfficeHandler) CreateOffice() http.HandlerFunc {
 // @Description  Возвращает массив офисов, доступных для записи в очередь
 // @Tags         Offices
 // @Produce      json
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен авторизации" default(Bearer <token>)
 // @Success      200  {object}  OfficesGetResponse  "Список офисов"
 // @Router       /offices [get]
 func (handler *OfficeHandler) GetOffices() http.HandlerFunc {
@@ -92,6 +97,8 @@ func (handler *OfficeHandler) GetOffices() http.HandlerFunc {
 // @Tags         Offices
 // @Param        id   path      int  true  "ID офиса"
 // @Produce      json
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен авторизации" default(Bearer <token>)
 // @Success      200  {object}  OfficeDeleteResponse  "Офис успешно удалён"
 // @Failure      400  {string}  string  "Некорректный ID офиса"
 // @Failure      404  {string}  string  "Офис не найден"

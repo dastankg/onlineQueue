@@ -72,11 +72,6 @@ func (qs *QueueService) GetClientInService(officeID uint, operatorID uint) (int,
 	return clientNumber, nil
 }
 
-func (qs *QueueService) FinishService(officeID uint, operatorID uint) error {
-	keyInService := fmt.Sprintf("in_service:%d", officeID)
-	return qs.RedisClient.HDel(ctx, keyInService, fmt.Sprintf("%d", operatorID)).Err()
-}
-
 func (qs *QueueService) GetClientPosition(officeID uint, clientNumber string) (int, error) {
 	keyQueue := fmt.Sprintf("queue:%d", officeID)
 

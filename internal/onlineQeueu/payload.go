@@ -15,11 +15,6 @@ type TakeClientRequest struct {
 	OperatorID uint `json:"operator_id"`
 }
 
-type FinishServiceRequest struct {
-	OfficeID   uint `json:"office_id"`
-	OperatorID uint `json:"operator_id"`
-}
-
 type GetQueueRequest struct {
 	OfficeID     uint   `json:"office_id" example:"1"`
 	ClientNumber string `json:"client_number" example:"996501234567"`

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"onlineQueue/configs"
 	"onlineQueue/pkg/jwt"
+	"onlineQueue/pkg/middleware"
 	"onlineQueue/pkg/req"
 	"onlineQueue/pkg/res"
 	"time"
@@ -25,7 +26,7 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 		AuthService: deps.AuthService,
 	}
 	router.HandleFunc("POST /login", handler.Login())
-	router.HandleFunc("POST /register", handler.Register())
+	router.Handle("POST /register", middleware.IsAuthed(handler.Register(), deps.Config))
 }
 
 // Register регистрация пользователя и возвращает пару токенов.
@@ -35,6 +36,8 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 // @Tags        Auth
 // @Accept      json
 // @Produce     json
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен авторизации" default(Bearer <token>)
 // @Param 		body body RegisterRequest true "Данные для регистрации"
 // @Success     201    {object}  RegisterResponse
 // @Failure     400    {string}  string  "Неверный логин или пароль"

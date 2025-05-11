@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"onlineQueue/configs"
+	"onlineQueue/pkg/middleware"
 	"onlineQueue/pkg/req"
 	"onlineQueue/pkg/res"
 	"strconv"
@@ -16,6 +18,7 @@ type QueueHandler struct {
 
 type QueueHandlerDeps struct {
 	QueueService *QueueService
+	*configs.Config
 }
 
 func NewQueueHandler(router *http.ServeMux, deps QueueHandlerDeps) {
@@ -25,8 +28,7 @@ func NewQueueHandler(router *http.ServeMux, deps QueueHandlerDeps) {
 
 	router.HandleFunc("POST /queue/join", handler.JoinQueue())
 	router.HandleFunc("POST /queue/cancel", handler.CancelQueue())
-	router.HandleFunc("POST /queue/take", handler.TakeClient())
-	router.HandleFunc("POST /queue/finish", handler.FinishService())
+	router.Handle("POST /queue/take", middleware.IsAuthed(handler.TakeClient(), deps.Config))
 	router.HandleFunc("GET /queue/position", handler.GetClientPosition())
 }
 
@@ -95,6 +97,8 @@ func (h *QueueHandler) CancelQueue() http.HandlerFunc {
 // @Tags         Queue
 // @Accept       json
 // @Produce      json
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен авторизации" default(Bearer <token>)
 // @Param        body  body  TakeClientRequest  true  "Данные для принятия клиента"
 // @Success      200   {object}  map[string]interface{}  "Клиент принят на обслуживание"
 // @Failure      400   {string}  string  "Очередь пуста или ошибка обработки"
@@ -117,34 +121,6 @@ func (h *QueueHandler) TakeClient() http.HandlerFunc {
 			"message":       "Client taken for service",
 			"client_number": clientNumber,
 		}, http.StatusOK)
-	}
-}
-
-// FinishService завершает обслуживание клиента оператором.
-//
-// @Summary      Завершить обслуживание
-// @Description  Завершает обслуживание клиента в конкретном офисе выбранным оператором.
-// @Tags         Queue
-// @Accept       json
-// @Produce      json
-// @Param        body  body  FinishServiceRequest  true  "Данные для завершения обслуживания"
-// @Success      200   {object}  map[string]string  "Успешное завершение"
-// @Failure      400   {string}  string       "Неверный запрос"
-// @Failure      500   {string}  string       "Ошибка при завершении обслуживания"
-// @Router       /queue/finish [post]
-func (h *QueueHandler) FinishService() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := req.HandleBody[FinishServiceRequest](&w, r)
-		if err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		if err := h.QueueService.FinishService(body.OfficeID, body.OperatorID); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		res.Json(w, map[string]string{"message": "Service finished"}, http.StatusOK)
 	}
 }
 

@@ -41,6 +41,7 @@ func App() http.Handler {
 
 	onlineQeueu.NewQueueHandler(router, onlineQeueu.QueueHandlerDeps{
 		queueService,
+		conf,
 	})
 	router.Handle("/docs/", httpSwagger.WrapHandler)
 
