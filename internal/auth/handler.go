@@ -120,3 +120,56 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 		res.Json(w, data, 201)
 	}
 }
+
+// @Summary Обновление токена доступа
+// @Description Обновляет access token используя refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body RefreshRequest true "Refresh токен"
+// @Success 200 {object} RefreshResponse "Новая пара токенов"
+// @Router /auth/refresh [post]
+func (handler *AuthHandler) Refresh() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := req.HandleBody[RefreshRequest](&w, r)
+		if err != nil {
+			return
+		}
+
+		jwtService := jwt.NewJWT(
+			handler.Config.Auth.AccessSecret,
+			handler.Config.Auth.RefreshSecret,
+		)
+
+		flag, claims := jwtService.ParseRefreshToken(body.RefreshToken)
+		if !flag {
+			http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+
+		expirationTime := time.Unix(claims.ExpiresAt.Unix(), 0)
+		remainingTime := time.Until(expirationTime)
+
+		if remainingTime <= 0 {
+			http.Error(w, "Refresh token has expired", http.StatusUnauthorized)
+			return
+		}
+
+		accessToken, err := jwtService.Create(jwt.JWTData{
+			Login:     claims.Login,
+			ExpiresAt: time.Now().Add(15 * time.Minute),
+			TokenType: "access",
+		}, jwtService.AccessSecret)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data := RefreshResponse{
+			AccessToken: accessToken,
+		}
+
+		res.Json(w, data, http.StatusOK)
+	}
+}
