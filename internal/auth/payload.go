@@ -25,3 +25,11 @@ type LoginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	Login        string `json:"login"`
 }
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshResponse struct {
+	AccessToken string `json:"access_token"`
+}

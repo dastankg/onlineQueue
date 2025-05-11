@@ -11,7 +11,7 @@ const (
 	RefreshToken string = "refresh"
 )
 
-type JWTDate struct {
+type JWTData struct {
 	Login     string
 	ExpiresAt time.Time
 	TokenType string
@@ -34,7 +34,7 @@ func NewJWT(accessSecret, refreshSecret string) *JWT {
 	}
 }
 
-func (j *JWT) Create(data JWTDate, secret string) (string, error) {
+func (j *JWT) Create(data JWTData, secret string) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"login":      data.Login,
 		"exp":        data.ExpiresAt.Unix(),
@@ -44,7 +44,7 @@ func (j *JWT) Create(data JWTDate, secret string) (string, error) {
 }
 
 func (j *JWT) CreateTokenPair(login string, accessTTL, refreshTTL time.Duration) (*TokenPair, error) {
-	accessToken, err := j.Create(JWTDate{
+	accessToken, err := j.Create(JWTData{
 		Login:     login,
 		ExpiresAt: time.Now().Add(accessTTL),
 		TokenType: AccessToken,
@@ -52,7 +52,7 @@ func (j *JWT) CreateTokenPair(login string, accessTTL, refreshTTL time.Duration)
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := j.Create(JWTDate{
+	refreshToken, err := j.Create(JWTData{
 		Login:     login,
 		ExpiresAt: time.Now().Add(refreshTTL),
 		TokenType: RefreshToken,
@@ -66,7 +66,7 @@ func (j *JWT) CreateTokenPair(login string, accessTTL, refreshTTL time.Duration)
 	}, nil
 }
 
-func (j *JWT) parse(token string, secret string) (bool, *JWTDate) {
+func (j *JWT) parse(token string, secret string) (bool, *JWTData) {
 	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -89,18 +89,18 @@ func (j *JWT) parse(token string, secret string) (bool, *JWTDate) {
 	if !ok {
 		return false, nil
 	}
-	return t.Valid, &JWTDate{
+	return t.Valid, &JWTData{
 		Login:     login,
 		ExpiresAt: time.Unix(int64(exp), 0),
 		TokenType: tokenType,
 	}
 }
 
-func (j *JWT) ParseAccessToken(token string) (bool, *JWTDate) {
+func (j *JWT) ParseAccessToken(token string) (bool, *JWTData) {
 	return j.parse(token, j.AccessSecret)
 }
 
-func (j *JWT) ParseRefreshToken(token string) (bool, *JWTDate) {
+func (j *JWT) ParseRefreshToken(token string) (bool, *JWTData) {
 	return j.parse(token, j.RefreshSecret)
 }
 
